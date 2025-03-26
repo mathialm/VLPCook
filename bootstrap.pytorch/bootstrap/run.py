@@ -7,14 +7,15 @@ import torch
 import traceback
 import torch.backends.cudnn as cudnn
 
-from .lib import utils
-from .lib.logger import Logger
-from .lib.options import Options
-from . import engines
-from . import datasets
-from . import models
-from . import optimizers
-from . import views
+from bootstrap.lib import utils
+from bootstrap.lib.logger import Logger
+from bootstrap.lib.options import Options
+from bootstrap.engines.factory import factory
+from bootstrap.engines.engine import Engine
+import bootstrap.datasets as datasets
+import bootstrap.models as models
+import bootstrap.optimizers as optimizers
+import bootstrap.views as views
 
  
 def init_experiment_directory(exp_dir, resume=None):
@@ -81,7 +82,7 @@ def run(path_opts=None, rank=0):
 
         # engine can train, eval, optimize the model
         # engine can save and load the model and optimizer
-        engine = engines.factory()
+        engine = factory()
 
         # dataset is a dictionary that contains all the needed datasets indexed by modes
         # (example: dataset.keys() -> ['train','eval'])

@@ -287,8 +287,6 @@ class Engine(object):
             timer['load'] = time.time() - timer['elapsed']
             self.hook('{}_on_start_batch'.format(mode))
 
-
-
             with torch.no_grad():
                 out = model_eval(batch)
 

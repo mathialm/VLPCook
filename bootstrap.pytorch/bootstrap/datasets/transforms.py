@@ -30,10 +30,10 @@ class ListDictsToDictLists(object):
         return batch
 
     def ld_to_dl(self, batch):
-        if isinstance(batch[0], collections.Mapping):
-            return {key: self.ld_to_dl([d[key] for d in batch]) for key in batch[0]}
-        else:
-            return batch
+            if isinstance(batch[0], collections.Mapping):
+                return {key: self.ld_to_dl([d[key] for d in batch]) for key in batch[0]}
+            else:
+                return batch
 
 
 class PadTensors(object):

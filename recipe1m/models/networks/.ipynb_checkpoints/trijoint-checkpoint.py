@@ -68,7 +68,7 @@ class CrossTrijoint(nn.Module):
         
         if opt_all['misc']['cuda']:
             if opt_all['misc'].get("device_id", False):
-                ids = opt_all'misc.device_id']
+                ids = opt_all['misc.device_id']
                 if isinstance(ids, list):
                     self.device = torch.device('cuda:'+str(ids[0]))
                 else:

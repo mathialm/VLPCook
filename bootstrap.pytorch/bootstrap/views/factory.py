@@ -1,7 +1,7 @@
 import importlib
-from ..lib.options import Options
-from ..lib.logger import Logger
-from .utils import MultiViews
+from bootstrap.lib.options import Options
+from bootstrap.lib.logger import Logger
+from bootstrap.views.utils import MultiViews
 
 
 def factory(engine=None):

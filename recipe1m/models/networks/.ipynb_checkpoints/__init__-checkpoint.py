@@ -1,1 +1,1 @@
-from .trijoint import Trijoint
+from recipe1m.models.trijoint import Trijoint

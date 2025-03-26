@@ -1,0 +1,168 @@
+exp:
+  resume: best_eval_epoch.metric.recall_at_1_im2recipe_mean
+  dir: logs/recipe1m/test_dir
+dataset:
+  import: recipe1m.datasets.factory
+  name: recipe1m
+  train_split: null
+  eval_split: test
+  nb_classes: 1048
+  database: lmdb
+  image_from: database
+  batch_size: 100
+  batch_sampler: triplet_classif
+  nb_threads: 4
+  debug: false
+  freq_mismatch: 0.0
+  tokenized_raw_text: true
+  use_vcs: true
+  kw_path:
+    train: data_dir/recipe1m/context_annotation/layer1_train_ingr_kw.json
+    val: data_dir/recipe1m/context_annotation/layer1_val_ingr_kw.json
+    test: data_dir/recipe1m/context_annotation/layer1_test_ingr_kw.json
+  randkw_p: 0.3
+  aux_kw_path:
+    train: data_dir/recipe1m/context_annotation/layer1_train_titles_kw.json
+    val: data_dir/recipe1m/context_annotation/layer1_val_titles_kw.json
+    test: data_dir/recipe1m/context_annotation/layer1_test_titles_kw.json
+  randkw_p_aux: 0.5
+model:
+  import: recipe1m.models.factory
+  name: trijoint
+  network:
+    name: trijoint
+    path_ingrs: data_dir/recipe1m/text/vocab.pkl
+    dim_image_out: 2048
+    with_ingrs: true
+    dim_ingr_out: 300
+    with_instrs: true
+    dim_instr_in: 1024
+    dim_instr_out: 1024
+    dim_emb: 1024
+    activations:
+    - tanh
+    - normalize
+    remove_additional_embedding:
+    - proj_image
+    checkpoint: null
+    text_encoder: bert-base-uncased
+    vision_width: 768
+    bert_config: ~/vlpcook/recipe1m/models/networks/recipe_networks/config_bert_albef.json
+    image_res: 224
+    num_hidden_layers_kw: 2
+    aux_kwords: true
+    kwords_same_level: false
+    cat_pos: 0
+    last_cat_aux: true
+    aux_kwords_encoder: true
+    image_backbone_name: clip
+    recipe_encoder: tfoodvicha-transformer
+    n_heads: 4
+    n_layers: 2
+    n_layers_single: 2
+    n_heads_single: 4
+    old: true
+    path_vocab: data_dir/recipe1m/text/vocab_all.txt
+    hidden_size: 512
+    with_titles: true
+    cross_transformer: false
+    cross_decoder_recipe: true
+    avg_concat: true
+    n_layers_cross: 2
+    n_heads_cross: 4
+    get_tokens_cross_decoder_recipe: true
+    cross_decoder_image: true
+    n_heads_cross_image: 4
+    n_layers_cross_image: 1
+    class_attention: false
+    cls_token: false
+    class_attention_fus: false
+    cls_token_fus: false
+    get_tokens: true
+    freeze_rec: false
+    freeze_im: false
+    vit_all_tokens: true
+    cross_encoder: true
+    cross_encoder_params:
+      cross_decoder: true
+      query_img: false
+      double_decoder: false
+      cross_attention: false
+      n_heads: 4
+      n_layers: 4
+      class_attention: false
+      cls_token: false
+      get_tokens: false
+      load_backbones: false
+  criterion:
+    name: trijoint
+    keep_background: false
+    retrieval_strategy:
+      name: triplet
+      margin: 0.05
+      margin_params:
+        increment_margin: true
+        increment: 0.005
+        max_margin: 0.3
+      sampling: max_negative
+      nb_samples: 9999
+      aggregation: valid
+      substrategy:
+      - IRR
+      - RII
+      - SIRR
+      - SRII
+      substrategy_weights:
+      - 1.0
+      - 1.0
+      - 0.1
+      - 0.1
+      get_tokens: true
+    cross_encoder: true
+    itm_loss_weight: 1
+    cross_encoder_params:
+      tri_cross_encoder: false
+  metric:
+    name: trijoint
+    retrieval_dir: /tmp/recipe1m
+    nb_bags: 10
+    nb_matchs_per_bag: 1000
+    k_test: 10
+    trijoint: true
+    save_ids: false
+  with_classif: false
+optimizer:
+  import: recipe1m.optimizers.factory
+  name: trijoint_fixed_fine_tune
+  switch_epoch: 20
+  lr: 1.0e-05
+  batch_size_factor: null
+  clip_grad: 8.0
+  lr_img: 1.0e-06
+engine:
+  name: logger
+  nb_epochs: 120
+  print_freq: 10
+  debug: false
+  saving_criteria:
+  - eval_epoch.metric.med_im2recipe_mean:min
+  - eval_epoch.metric.recall_at_1_im2recipe_mean:max
+misc:
+  cuda: true
+  seed: 1338
+  logs_name: null
+  overrite: true
+  data_parrallel: true
+view:
+- logs:train_epoch.loss
+- logs:train_epoch.bad_pairs
+- logs:eval_epoch.metric.med_im2recipe_mean
+- logs:eval_epoch.metric.recall_at_1_im2recipe_mean
+- logs:eval_epoch.metric.recall_at_5_im2recipe_mean
+- logs:eval_epoch.metric.recall_at_10_im2recipe_mean
+- logs:eval_epoch.metric.med_recipe2im_mean
+- logs:eval_epoch.metric.recall_at_1_recipe2im_mean
+- logs:eval_epoch.metric.recall_at_5_recipe2im_mean
+- logs:eval_epoch.metric.recall_at_10_recipe2im_mean
+- logs:optimizer.is_optimizer_recipe&image
+- logs:optimizer.total_norm

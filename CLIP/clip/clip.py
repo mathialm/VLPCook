@@ -3,15 +3,15 @@ import os
 import urllib
 import warnings
 from typing import Any, Union, List
-from pkg_resources import packaging
 
 import torch
 from PIL import Image
+from setuptools._vendor import packaging
 from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normalize
 from tqdm import tqdm
 
-from .model import build_model
-from .simple_tokenizer import SimpleTokenizer as _Tokenizer
+from CLIP.clip.model import build_model
+from CLIP.clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
 
 try:
     from torchvision.transforms import InterpolationMode

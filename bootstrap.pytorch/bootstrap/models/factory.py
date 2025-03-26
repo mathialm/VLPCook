@@ -1,13 +1,13 @@
 import importlib
 
-from ..lib.options import Options
-from ..lib.logger import Logger
+from bootstrap.lib.options import Options
+from bootstrap.lib.logger import Logger
 
-from .model import DefaultModel
-from .model import SimpleModel
+from bootstrap.models.model import DefaultModel
+from bootstrap.models.model import SimpleModel
 from torch import nn 
 import torch
-from .networks.data_parallel import DataParallel, DistributedDataParallel
+from bootstrap.models.networks.data_parallel import DataParallel, DistributedDataParallel
 import click
 
 def factory(engine=None, rank=0):

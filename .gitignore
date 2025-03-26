@@ -1,1 +1,8 @@
 .ipynb_checkpoints
+data_dir/
+images/
+pretrained_models/
+tmp/
+__pycache__/
+*.out
+*.egg-info/

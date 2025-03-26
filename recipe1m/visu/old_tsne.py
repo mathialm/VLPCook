@@ -10,7 +10,6 @@ import torchvision.transforms as viztransforms
 from bootstrap.lib.logger import Logger
 from PIL import Image
 
-from scipy.misc import imsave
 
 import matplotlib as mpl
 mpl.use('Agg')

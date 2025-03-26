@@ -293,6 +293,7 @@ class Options(object):
         """
         result = {}
         if isinstance(source, str):
+            print(f"{os.path.abspath(source)}")
             with open(source, 'r') as yaml_file:
                 options_dict = yaml.safe_load(yaml_file)
         elif isinstance(source, dict):

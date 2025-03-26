@@ -1,4 +1,6 @@
 import os
+import sys
+
 import lmdb
 import pickle
 import torch
@@ -16,6 +18,7 @@ from bootstrap.lib.options import Options
  
 import json
 
+from preprocess.convert_kw_ids import format_as_id
 
 
 import random 
@@ -116,6 +119,7 @@ class DatasetLMDB(Dataset):
         return self.envs['imnames'].stat()['entries']
 
 
+
 class Images(DatasetLMDB):
 
     def __init__(self, dir_data, split, batch_size, nb_threads, image_from='database', 
@@ -125,7 +129,8 @@ class Images(DatasetLMDB):
 
         super(Images, self).__init__(dir_data, split, batch_size, nb_threads)
         self.image_tf = image_tf
-        self.dir_img = os.path.join(dir_data,'recipe1M', 'images')
+        #self.dir_img = os.path.join(dir_data, 'recipe1M', 'images') OLD, just refer to the directory containing the test, train, val folders
+        self.dir_img = os.path.abspath(dir_data)
 
         self.envs['numims'] = lmdb.open(self.path_envs['numims'], readonly=True, lock=False)
         self.envs['impos'] = lmdb.open(self.path_envs['impos'], readonly=True, lock=False)
@@ -164,18 +169,27 @@ class Images(DatasetLMDB):
                 self.randkw_p_aux = None
             Logger()('randkw_p...', self.randkw_p)
 
-            self.dir_img_vcs = '/data/mshukor/data/recipe1m/recipe1M/images'
+            self.dir_img_vcs = self.dir_data
             self.tokenizer = tokenizer
 
 
 
     def __getitem__(self, index):
-        item = self.get_image(index)
+        try:
+            item = self.get_image(index)
+        except FileNotFoundError:
+            Logger()('Skipping index ', index)
+            return self.__getitem__(index + 1) #Skipping bad indexes in case
         return item
 
     def format_path_img(self, raw_path):
         # "recipe1M/images/train/6/b/d/c/6bdca6e490.jpg"
+        # "Recipe1M/train/6bdca6e490.jpg" NEW
         basename = os.path.basename(raw_path)
+        path_img = os.path.join(self.dir_img,
+                                self.split,
+                                basename)
+        """
         path_img = os.path.join(self.dir_img,
                                 self.split,
                                 basename[0],
@@ -183,6 +197,7 @@ class Images(DatasetLMDB):
                                 basename[2],
                                 basename[3],
                                 basename)
+        """
         return path_img
 
     def get_image(self, index):
@@ -192,13 +207,17 @@ class Images(DatasetLMDB):
         else:
             item['data'], item['index'], item['path'] = self._load_image_data(index)
         item['class_id'], item['class_name'] = self._load_class(index)
+        #print(f"{item['index']} | {item['path']} | {item['class_id']} | {item['class_name']}")
+
         if self.use_vcs:
             # print(self.image_path_to_kws.keys())
-            kw_path = item['path'].replace(self.dir_img, self.dir_img_vcs)
+            #kw_path = item['path'].replace(self.dir_img, self.dir_img_vcs)
+            kw_path = format_as_id(item['path'])
             if self.random_kw:
                 rand_index = random.choice(range(len(self)))
                 _, _, rand_path = self._load_image_data(rand_index)
                 kw_path = rand_path.replace(self.dir_img, self.dir_img_vcs)
+
             if kw_path in self.image_path_to_kws:
                 
                 kwords = self.image_path_to_kws[kw_path]
@@ -231,14 +250,15 @@ class Images(DatasetLMDB):
                     item['aux_kwords_masks'] = aux_kws.attention_mask[0]
 
             else:
+                Logger()(" kws not found", item['path'])
+                raise FileNotFoundError
                 kws = ['food', 'food']
-                Logger()("kws not found", item['path'])
+
 
             kws = [' '.join(kws)]
             kws = self.tokenizer(kws, padding='longest', truncation=True, max_length=55, return_tensors="pt") # tokenize kw with bert tokenizer
             item['kwords_ids'] = kws.input_ids[0]
             item['kwords_masks'] = kws.attention_mask[0]
-
         return item
 
     def _pil_loader(self, path):

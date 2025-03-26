@@ -19,7 +19,7 @@ def create_tokenized_layer(layer: dict = None, output_path:str = None, tokenized
     with open(instrs_path,'rb') as f:
         tokenized_instrs = pickle.load(f)
         
-    for i, (k, v) in tqdm(enumerate(new_layer.items())):
+    for i, (k, v) in tqdm(enumerate(new_layer.items()), total=len(new_layer)):
         v['title'] = tokenized_titles[v['id']]
         v['ingredients'] = tokenized_ingrds[v['id']]
         v['instructions'] = tokenized_instrs[v['id']]
@@ -37,7 +37,7 @@ def tokenize_and_save(vocab_path: str, entity: str ='title', layer=None, out_pat
     count = 0
     with open(vocab_path,'rb') as f:
         vocab = pickle.load(f)
-    for i, (k, v) in tqdm(enumerate(layer.items())):
+    for i, (k, v) in tqdm(enumerate(layer.items()), total=len(layer)):
         if entity == 'title':
             text = v['title'].lower()
             for f in filter_:
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     print('start creating vocab...')
     text = set()
     filter_titles = ['-', '_', '/']
-    for i, (k, v) in tqdm(enumerate(layer1_.items())):
+    for i, (k, v) in tqdm(enumerate(layer1_.items()), total=len(layer1_)):
         title = v['title'].lower()
         ingrs = [ing['text'].lower() for ing in v['ingredients']]
         insts = [inst['text'].lower() for inst in v['instructions']]
@@ -142,26 +142,41 @@ if __name__ == '__main__':
     text.add('<unk>')
 
     text_dict = {}
-    for i, t in tqdm(enumerate(text)):
+    for i, t in tqdm(enumerate(text), total=len(text)):
         text_dict[t] = i
 
 
     output_path_vocab = args.output_path_vocab
+    if not os.path.exists(os.path.dirname(output_path_vocab)):
+        os.makedirs(os.path.dirname(output_path_vocab))
 
     with open(output_path_vocab,'wb') as f:
         pickle.dump(text_dict, f)
 
     print("start tokenization...")
 
-    out_path = os.path.join(args.output_path_tokenized_texts, 'tokenized_raw_titles.txt')
-    embedded = tokenize_and_save(vocab_path=output_path_vocab, entity='title', layer=layer1_, out_path=out_path)
+    output_path_tokenized_texts = args.output_path_tokenized_texts
+    if not os.path.exists(output_path_tokenized_texts):
+        os.makedirs(output_path_vocab)
 
-    out_path = os.path.join(args.output_path_tokenized_texts, 'tokenized_raw_ingrs.txt') 
-    embedded = tokenize_and_save(vocab_path=output_path_vocab, entity='ingrs', layer=layer1_, out_path=out_path)
+    out_path = os.path.join(output_path_tokenized_texts, 'tokenized_raw_titles.txt')
+    if not os.path.exists(out_path) or os.path.getsize(out_path) == 0:
+        embedded = tokenize_and_save(vocab_path=output_path_vocab, entity='title', layer=layer1_, out_path=out_path)
 
-    out_path = os.path.join(args.output_path_tokenized_texts, 'tokenized_raw_instrs.txt') 
-    embedded = tokenize_and_save(vocab_path=output_path_vocab, entity='instrs', layer=layer1_, out_path=out_path)
+    out_path = os.path.join(output_path_tokenized_texts, 'tokenized_raw_ingrs.txt')
+    if not os.path.exists(out_path) or os.path.getsize(out_path) == 0:
+        embedded = tokenize_and_save(vocab_path=output_path_vocab, entity='ingrs', layer=layer1_, out_path=out_path)
+
+    out_path = os.path.join(output_path_tokenized_texts, 'tokenized_raw_instrs.txt')
+    if not os.path.exists(out_path) or os.path.getsize(out_path) == 0:
+        embedded = tokenize_and_save(vocab_path=output_path_vocab, entity='instrs', layer=layer1_, out_path=out_path)
 
 
     print('create and save layer 1...')
-    create_tokenized_layer(layer=layer1_, output_path=args.output_path_layer1 , tokenized_text_path=args.output_path_tokenized_texts)
+    output_path_layer1 = args.output_path_layer1
+    if not os.path.exists(os.path.dirname(output_path_layer1)):
+        os.makedirs(os.path.dirname(output_path_layer1))
+    if not os.path.exists(output_path_layer1) or os.path.getsize(output_path_layer1) == 0:
+        create_tokenized_layer(layer=layer1_, output_path=output_path_layer1, tokenized_text_path=output_path_tokenized_texts)
+
+    print(f"Finished!")

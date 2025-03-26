@@ -1,11 +1,11 @@
 import copy
 import torch
 import importlib
-from ..lib.options import Options
-from ..lib.logger import Logger
+from bootstrap.lib.options import Options
+from bootstrap.lib.logger import Logger
 
-from . import lr_scheduler
-from .grad_clipper import GradClipper
+from bootstrap.optimizers import lr_scheduler
+from bootstrap.optimizers.grad_clipper import GradClipper
 
 
 def factory(model, engine=None):
